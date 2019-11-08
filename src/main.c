@@ -4,6 +4,7 @@
 
 struct commit {
 	git_oid oid;
+	git_time_t time;
 	struct commit *next;
 };
 
@@ -49,7 +50,7 @@ static int walk_repository(git_repository *repo, walk_func f) {
 	return error;
 }
 
-static int register_commit(git_oid *oid) {
+static int register_commit(git_oid *oid, git_time_t time) {
 
 	struct commit *c = malloc(sizeof(struct commit));
 	if (! c) {
@@ -57,6 +58,7 @@ static int register_commit(git_oid *oid) {
 	}
 
 	git_oid_cpy(&c->oid, oid);
+	c->time = time;
 	c->next = destination.commits;
 
 	destination.commits = c;
@@ -76,7 +78,7 @@ static int load_commit(git_repository *repo, git_oid *oid, git_commit *commit) {
 	}
 
 	/* Add a new entry to our linked list of known commits */
-	return register_commit(&commit_oid);
+	return register_commit(&commit_oid, git_commit_time(commit));
 }
 
 static int open_repository(const char *path) {
@@ -205,7 +207,7 @@ static int import_commit(git_repository *repo, git_oid *oid,
 
 	git_oid_cpy(&destination.head.oid, &new_commit_oid);
 
-	register_commit(&new_commit_oid);
+	register_commit(&new_commit_oid, git_commit_time(commit));
 
 	return 0;
 }
