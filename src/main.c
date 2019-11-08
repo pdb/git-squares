@@ -49,6 +49,21 @@ static int walk_repository(git_repository *repo, walk_func f) {
 	return error;
 }
 
+static int register_commit(git_oid *oid) {
+
+	struct commit *c = malloc(sizeof(struct commit));
+	if (! c) {
+		return 1;
+	}
+
+	git_oid_cpy(&c->oid, oid);
+	c->next = destination.commits;
+
+	destination.commits = c;
+
+	return 0;
+}
+
 static int load_commit(git_repository *repo, git_oid *oid, git_commit *commit) {
 
 	const char *summary = git_commit_summary(commit);
@@ -61,15 +76,7 @@ static int load_commit(git_repository *repo, git_oid *oid, git_commit *commit) {
 	}
 
 	/* Add a new entry to our linked list of known commits */
-	struct commit *c = malloc(sizeof(struct commit));
-	if (! c) {
-		return 1;
-	}
-	git_oid_cpy(&c->oid, &commit_oid);
-	c->next = destination.commits;
-	destination.commits = c;
-
-	return 0;
+	return register_commit(&commit_oid);
 }
 
 static int open_repository(const char *path) {
