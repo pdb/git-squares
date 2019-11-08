@@ -3,6 +3,7 @@
 
 static struct {
 	git_repository *repo;
+	git_signature *signature;
 } destination = { NULL };
 
 typedef int (*walk_func)(git_repository *repo, git_oid *oid);
@@ -38,11 +39,20 @@ static int open_repository(const char *path) {
 		return 1;
 	}
 
+	error = git_signature_default(&destination.signature, destination.repo);
+	if (error) {
+		const git_error *e = git_error_last();
+		fprintf(stderr, "git-import-squares: %s\n", e->message);
+		git_repository_free(destination.repo);
+		return 1;
+	}
+
 	return error;
 }
 
 static void close_repository() {
 
+	git_signature_free(destination.signature);
 	git_repository_free(destination.repo);
 }
 
