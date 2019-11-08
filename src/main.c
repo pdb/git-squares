@@ -1,7 +1,17 @@
 #include <git2.h>
 #include <stdio.h>
 
-static int import_commit(git_oid *oid) {
+static int import_commit(git_repository *repo, git_oid *oid) {
+
+	git_commit *commit = NULL;
+	int error = git_commit_lookup(&commit, repo, oid);
+	if (error) {
+		const git_error *e = git_error_last();
+		fprintf(stderr, "git-import-squares: %s\n", e->message);
+		return 1;
+	}
+
+	git_commit_free(commit);
 
 	return 0;
 }
@@ -27,7 +37,8 @@ static int import_repository(const char *path) {
 	}
 
 	git_oid oid;
-	while (! git_revwalk_next(&oid, walk) && ! import_commit(&oid)) { }
+	while (! git_revwalk_next(&oid, walk) && ! import_commit(repo, &oid)) {
+	}
 
 	git_revwalk_free(walk);
 	git_repository_free(repo);
