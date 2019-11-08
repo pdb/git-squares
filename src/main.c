@@ -4,6 +4,10 @@
 static struct {
 	git_repository *repo;
 	git_signature *signature;
+	struct {
+		git_oid oid;
+		git_tree *tree;
+	} head;
 } destination = { NULL };
 
 typedef int (*walk_func)(git_repository *repo, git_oid *oid);
@@ -47,11 +51,45 @@ static int open_repository(const char *path) {
 		return 1;
 	}
 
+	error = git_reference_name_to_id(&destination.head.oid,
+		destination.repo, "HEAD");
+	if (error) {
+		const git_error *e = git_error_last();
+		fprintf(stderr, "git-import-squares: %s\n", e->message);
+		git_signature_free(destination.signature);
+		git_repository_free(destination.repo);
+		return 1;
+	}
+
+	git_commit *commit;
+	error = git_commit_lookup(&commit, destination.repo,
+		&destination.head.oid);
+	if (error) {
+		const git_error *e = git_error_last();
+		fprintf(stderr, "git-import-squares: %s\n", e->message);
+		git_signature_free(destination.signature);
+		git_repository_free(destination.repo);
+		return 1;
+	}
+
+	error = git_commit_tree(&destination.head.tree, commit);
+	if (error) {
+		const git_error *e = git_error_last();
+		fprintf(stderr, "git-import-squares: %s\n", e->message);
+		git_commit_free(commit);
+		git_signature_free(destination.signature);
+		git_repository_free(destination.repo);
+		return 1;
+	}
+
+	git_commit_free(commit);
+
 	return error;
 }
 
 static void close_repository() {
 
+	git_tree_free(destination.head.tree);
 	git_signature_free(destination.signature);
 	git_repository_free(destination.repo);
 }
