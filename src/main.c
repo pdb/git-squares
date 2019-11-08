@@ -1,6 +1,30 @@
 #include <git2.h>
 #include <stdio.h>
 
+typedef int (*walk_func)(git_repository *repo, git_oid *oid);
+
+static int walk_repository(git_repository *repo, walk_func f) {
+
+	git_revwalk *walk = NULL;
+	git_revwalk_new(&walk, repo);
+
+	int error = git_revwalk_push_glob(walk, "*");
+	if (error) {
+		const git_error *e = git_error_last();
+		fprintf(stderr, "git-import-squares: %s\n", e->message);
+		return 1;
+	}
+
+	git_oid oid;
+	while (! error && ! git_revwalk_next(&oid, walk)) {
+		error = f(repo, &oid);
+	}
+
+	git_revwalk_free(walk);
+
+	return error;
+}
+
 static int import_commit(git_repository *repo, git_oid *oid) {
 
 	git_commit *commit = NULL;
@@ -26,21 +50,8 @@ static int import_repository(const char *path) {
 		return 1;
 	}
 
-	git_revwalk *walk = NULL;
-	git_revwalk_new(&walk, repo);
+	walk_repository(repo, import_commit);
 
-	error = git_revwalk_push_glob(walk, "*");
-	if (error) {
-		const git_error *e = git_error_last();
-		fprintf(stderr, "git-import-squares: %s\n", e->message);
-		return 1;
-	}
-
-	git_oid oid;
-	while (! git_revwalk_next(&oid, walk) && ! import_commit(repo, &oid)) {
-	}
-
-	git_revwalk_free(walk);
 	git_repository_free(repo);
 
 	return 0;
