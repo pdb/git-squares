@@ -1,5 +1,11 @@
 #include <git2.h>
 #include <stdio.h>
+#include <string.h>
+
+struct commit {
+	git_oid oid;
+	struct commit *next;
+};
 
 static struct {
 	git_repository *repo;
@@ -8,6 +14,7 @@ static struct {
 		git_oid oid;
 		git_tree *tree;
 	} head;
+	struct commit *commits;
 } destination = { NULL };
 
 typedef int (*walk_func)(git_repository *repo, git_oid *oid, git_commit *commit);
@@ -40,6 +47,29 @@ static int walk_repository(git_repository *repo, walk_func f) {
 	git_revwalk_free(walk);
 
 	return error;
+}
+
+static int load_commit(git_repository *repo, git_oid *oid, git_commit *commit) {
+
+	const char *summary = git_commit_summary(commit);
+
+	/* Skip commits that aren't ours */
+	git_oid commit_oid;
+	if (strlen(summary) != GIT_OID_HEXSZ ||
+		git_oid_fromstrn(&commit_oid, summary, GIT_OID_HEXSZ)) {
+		return 0;
+	}
+
+	/* Add a new entry to our linked list of known commits */
+	struct commit *c = malloc(sizeof(struct commit));
+	if (! c) {
+		return 1;
+	}
+	git_oid_cpy(&c->oid, &commit_oid);
+	c->next = destination.commits;
+	destination.commits = c;
+
+	return 0;
 }
 
 static int open_repository(const char *path) {
@@ -92,10 +122,25 @@ static int open_repository(const char *path) {
 
 	git_commit_free(commit);
 
+	error = walk_repository(destination.repo, load_commit);
+	if (error) {
+		const git_error *e = git_error_last();
+		fprintf(stderr, "git-import-squares: %s\n", e->message);
+		git_signature_free(destination.signature);
+		git_repository_free(destination.repo);
+		return 1;
+	}
+
 	return error;
 }
 
 static void close_repository() {
+
+	while (destination.commits) {
+		struct commit *c = destination.commits->next;
+		free(destination.commits);
+		destination.commits = c;
+	}
 
 	git_tree_free(destination.head.tree);
 	git_signature_free(destination.signature);
