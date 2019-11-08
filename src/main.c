@@ -205,6 +205,8 @@ static int import_commit(git_repository *repo, git_oid *oid,
 
 	git_oid_cpy(&destination.head.oid, &new_commit_oid);
 
+	register_commit(&new_commit_oid);
+
 	return 0;
 }
 
