@@ -10,7 +10,7 @@ static struct {
 	} head;
 } destination = { NULL };
 
-typedef int (*walk_func)(git_repository *repo, git_oid *oid);
+typedef int (*walk_func)(git_repository *repo, git_oid *oid, git_commit *commit);
 
 static int walk_repository(git_repository *repo, walk_func f) {
 
@@ -26,7 +26,15 @@ static int walk_repository(git_repository *repo, walk_func f) {
 
 	git_oid oid;
 	while (! error && ! git_revwalk_next(&oid, walk)) {
-		error = f(repo, &oid);
+		git_commit *commit;
+		error = git_commit_lookup(&commit, repo, &oid);
+		if (error) {
+			const git_error *e = git_error_last();
+			fprintf(stderr, "git-import-squares: %s\n", e->message);
+		} else {
+			error = f(repo, &oid, commit);
+			git_commit_free(commit);
+		}
 	}
 
 	git_revwalk_free(walk);
@@ -94,17 +102,8 @@ static void close_repository() {
 	git_repository_free(destination.repo);
 }
 
-static int import_commit(git_repository *repo, git_oid *oid) {
-
-	git_commit *commit = NULL;
-	int error = git_commit_lookup(&commit, repo, oid);
-	if (error) {
-		const git_error *e = git_error_last();
-		fprintf(stderr, "git-import-squares: %s\n", e->message);
-		return 1;
-	}
-
-	git_commit_free(commit);
+static int import_commit(git_repository *repo, git_oid *oid,
+	git_commit *commit) {
 
 	return 0;
 }
