@@ -50,11 +50,11 @@ static int import_repository(const char *path) {
 		return 1;
 	}
 
-	walk_repository(repo, import_commit);
+	error = walk_repository(repo, import_commit);
 
 	git_repository_free(repo);
 
-	return 0;
+	return error;
 }
 
 int main(int argc, char **argv) {
