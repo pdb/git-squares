@@ -1,4 +1,5 @@
-#include <git2.h>
+#include "squares.h"
+
 #include <stdio.h>
 #include <string.h>
 
@@ -17,38 +18,6 @@ static struct {
 	} head;
 	struct commit *commits;
 } destination = { NULL };
-
-typedef int (*walk_func)(git_repository *repo, git_oid *oid, git_commit *commit);
-
-static int walk_repository(git_repository *repo, walk_func f) {
-
-	git_revwalk *walk = NULL;
-	git_revwalk_new(&walk, repo);
-
-	int error = git_revwalk_push_glob(walk, "*");
-	if (error) {
-		const git_error *e = git_error_last();
-		fprintf(stderr, "git-squares: %s\n", e->message);
-		return 1;
-	}
-
-	git_oid oid;
-	while (! error && ! git_revwalk_next(&oid, walk)) {
-		git_commit *commit;
-		error = git_commit_lookup(&commit, repo, &oid);
-		if (error) {
-			const git_error *e = git_error_last();
-			fprintf(stderr, "git-squares: %s\n", e->message);
-		} else {
-			error = f(repo, &oid, commit);
-			git_commit_free(commit);
-		}
-	}
-
-	git_revwalk_free(walk);
-
-	return error;
-}
 
 static int register_commit(git_oid *oid, git_time_t time) {
 
