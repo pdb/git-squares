@@ -3,11 +3,11 @@
 #include <stdio.h>
 #include <string.h>
 
-static int import_commit(git_repository *repo, git_oid *oid,
-	git_commit *commit) {
+static int import_commit(struct destination *destination, git_repository *repo,
+	git_oid *oid, git_commit *commit) {
 
 	/* Skip if this commit is already known to us */
-	for (struct commit *c = destination.commits; c; c = c->next) {
+	for (struct commit *c = destination->commits; c; c = c->next) {
 		if (git_oid_equal(oid, &c->oid)) {
 			return 0;
 		}
@@ -15,7 +15,7 @@ static int import_commit(git_repository *repo, git_oid *oid,
 
 	/* Skip if this commit isn't authored by us */
 	const git_signature *author = git_commit_author(commit);
-	if (strcmp(destination.signature->name, author->name)) {
+	if (strcmp(destination->signature->name, author->name)) {
 		return 0;
 	}
 
@@ -23,15 +23,15 @@ static int import_commit(git_repository *repo, git_oid *oid,
 	snprintf(hash, sizeof hash, "%s", git_oid_tostr_s(oid));
 
 	git_commit *parent;
-	int error = git_commit_lookup(&parent, destination.repo,
-		&destination.head.oid);
+	int error = git_commit_lookup(&parent, destination->repo,
+		&destination->head.oid);
 	if (error) {
 		const git_error *e = git_error_last();
 		fprintf(stderr, "git-squares: %s\n", e->message);
 		return 1;
 	}
 
-	destination.signature->when = (git_time) {
+	destination->signature->when = (git_time) {
 		git_commit_time(commit),
 		git_commit_time_offset(commit),
 		git_commit_time_offset(commit) < 0 ? '-' : '+'
@@ -40,13 +40,13 @@ static int import_commit(git_repository *repo, git_oid *oid,
 	git_oid new_commit_oid;
 	error = git_commit_create_v(
 		&new_commit_oid,
-		destination.repo,
+		destination->repo,
 		"HEAD",
-		destination.signature,
-		destination.signature,
+		destination->signature,
+		destination->signature,
 		"UTF-8",
 		hash,
-		destination.head.tree,
+		destination->head.tree,
 		1,
 		parent
 	);
@@ -58,14 +58,14 @@ static int import_commit(git_repository *repo, git_oid *oid,
 
 	git_commit_free(parent);
 
-	git_oid_cpy(&destination.head.oid, &new_commit_oid);
+	git_oid_cpy(&destination->head.oid, &new_commit_oid);
 
-	register_commit(&new_commit_oid, git_commit_time(commit));
+	register_commit(destination, &new_commit_oid, git_commit_time(commit));
 
 	return 0;
 }
 
-int import_repository(const char *path) {
+int import_repository(struct destination *destination, const char *path) {
 
 	git_repository *repo = NULL;
 	int error = git_repository_open(&repo, path);
@@ -75,7 +75,7 @@ int import_repository(const char *path) {
 		return 1;
 	}
 
-	error = walk_repository(repo, import_commit);
+	error = walk_repository(destination, repo, import_commit);
 
 	git_repository_free(repo);
 

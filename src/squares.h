@@ -19,16 +19,17 @@ struct destination {
 	struct commit *commits;
 };
 
-extern struct destination destination;
+int register_commit(struct destination *destination, git_oid *oid,
+	git_time_t time);
+int open_repository(struct destination **destination, const char *path);
+void close_repository(struct destination *destination);
 
-int register_commit(git_oid *oid, git_time_t time);
-int open_repository(const char *path);
-void close_repository();
+int import_repository(struct destination *destination, const char *path);
 
-int import_repository(const char *path);
+typedef int (*walk_func)(struct destination *destination, git_repository *repo,
+	git_oid *oid, git_commit *commit);
 
-typedef int (*walk_func)(git_repository *repo, git_oid *oid, git_commit *commit);
-
-int walk_repository(git_repository *repo, walk_func f);
+int walk_repository(struct destination *destination, git_repository *repo,
+	walk_func f);
 
 #endif

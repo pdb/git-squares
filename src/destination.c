@@ -3,7 +3,8 @@
 #include <stdio.h>
 #include <string.h>
 
-int register_commit(git_oid *oid, git_time_t time) {
+int register_commit(struct destination *destination, git_oid *oid,
+	git_time_t time) {
 
 	struct commit *c = malloc(sizeof(struct commit));
 	if (! c) {
@@ -12,14 +13,15 @@ int register_commit(git_oid *oid, git_time_t time) {
 
 	git_oid_cpy(&c->oid, oid);
 	c->time = time;
-	c->next = destination.commits;
+	c->next = destination->commits;
 
-	destination.commits = c;
+	destination->commits = c;
 
 	return 0;
 }
 
-static int load_commit(git_repository *repo, git_oid *oid, git_commit *commit) {
+static int load_commit(struct destination *destination, git_repository *repo,
+	git_oid *oid, git_commit *commit) {
 
 	const char *summary = git_commit_summary(commit);
 
@@ -31,80 +33,93 @@ static int load_commit(git_repository *repo, git_oid *oid, git_commit *commit) {
 	}
 
 	/* Add a new entry to our linked list of known commits */
-	return register_commit(&commit_oid, git_commit_time(commit));
+	return register_commit(destination, &commit_oid,
+		git_commit_time(commit));
 }
 
-int open_repository(const char *path) {
+int open_repository(struct destination **_destination, const char *path) {
 
-	int error = git_repository_open(&destination.repo, path);
+	struct destination *destination =
+		*_destination = malloc(sizeof(struct destination));
+	if (! destination) {
+		fprintf(stderr, "git-squares: malloc failed\n");
+		return 1;
+	}
+
+	memset(destination, 0, sizeof(struct destination));
+
+	int error = git_repository_open(&destination->repo, path);
 	if (error) {
 		const git_error *e = git_error_last();
 		fprintf(stderr, "git-squares: %s\n", e->message);
 		return 1;
 	}
 
-	error = git_signature_default(&destination.signature, destination.repo);
+	error = git_signature_default(&destination->signature,
+		destination->repo);
 	if (error) {
 		const git_error *e = git_error_last();
 		fprintf(stderr, "git-squares: %s\n", e->message);
-		git_repository_free(destination.repo);
+		git_repository_free(destination->repo);
 		return 1;
 	}
 
-	error = git_reference_name_to_id(&destination.head.oid,
-		destination.repo, "HEAD");
+	error = git_reference_name_to_id(&destination->head.oid,
+		destination->repo, "HEAD");
 	if (error) {
 		const git_error *e = git_error_last();
 		fprintf(stderr, "git-squares: %s\n", e->message);
-		git_signature_free(destination.signature);
-		git_repository_free(destination.repo);
+		git_signature_free(destination->signature);
+		git_repository_free(destination->repo);
 		return 1;
 	}
 
 	git_commit *commit;
-	error = git_commit_lookup(&commit, destination.repo,
-		&destination.head.oid);
+	error = git_commit_lookup(&commit, destination->repo,
+		&destination->head.oid);
 	if (error) {
 		const git_error *e = git_error_last();
 		fprintf(stderr, "git-squares: %s\n", e->message);
-		git_signature_free(destination.signature);
-		git_repository_free(destination.repo);
+		git_signature_free(destination->signature);
+		git_repository_free(destination->repo);
 		return 1;
 	}
 
-	error = git_commit_tree(&destination.head.tree, commit);
+	error = git_commit_tree(&destination->head.tree, commit);
 	if (error) {
 		const git_error *e = git_error_last();
 		fprintf(stderr, "git-squares: %s\n", e->message);
 		git_commit_free(commit);
-		git_signature_free(destination.signature);
-		git_repository_free(destination.repo);
+		git_signature_free(destination->signature);
+		git_repository_free(destination->repo);
 		return 1;
 	}
 
 	git_commit_free(commit);
 
-	error = walk_repository(destination.repo, load_commit);
+	error = walk_repository(destination, destination->repo, load_commit);
 	if (error) {
 		const git_error *e = git_error_last();
 		fprintf(stderr, "git-squares: %s\n", e->message);
-		git_signature_free(destination.signature);
-		git_repository_free(destination.repo);
+		git_signature_free(destination->signature);
+		git_repository_free(destination->repo);
 		return 1;
 	}
 
 	return error;
 }
 
-void close_repository() {
+void close_repository(struct destination *destination) {
 
-	while (destination.commits) {
-		struct commit *c = destination.commits->next;
-		free(destination.commits);
-		destination.commits = c;
+	while (destination->commits) {
+		struct commit *c = destination->commits->next;
+		free(destination->commits);
+		destination->commits = c;
 	}
 
-	git_tree_free(destination.head.tree);
-	git_signature_free(destination.signature);
-	git_repository_free(destination.repo);
+	git_tree_free(destination->head.tree);
+	git_signature_free(destination->signature);
+	git_repository_free(destination->repo);
+
+	free(destination);
 }
