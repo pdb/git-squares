@@ -28,7 +28,7 @@ static int walk_repository(git_repository *repo, walk_func f) {
 	int error = git_revwalk_push_glob(walk, "*");
 	if (error) {
 		const git_error *e = git_error_last();
-		fprintf(stderr, "git-import-squares: %s\n", e->message);
+		fprintf(stderr, "git-squares: %s\n", e->message);
 		return 1;
 	}
 
@@ -38,7 +38,7 @@ static int walk_repository(git_repository *repo, walk_func f) {
 		error = git_commit_lookup(&commit, repo, &oid);
 		if (error) {
 			const git_error *e = git_error_last();
-			fprintf(stderr, "git-import-squares: %s\n", e->message);
+			fprintf(stderr, "git-squares: %s\n", e->message);
 		} else {
 			error = f(repo, &oid, commit);
 			git_commit_free(commit);
@@ -86,14 +86,14 @@ static int open_repository(const char *path) {
 	int error = git_repository_open(&destination.repo, path);
 	if (error) {
 		const git_error *e = git_error_last();
-		fprintf(stderr, "git-import-squares: %s\n", e->message);
+		fprintf(stderr, "git-squares: %s\n", e->message);
 		return 1;
 	}
 
 	error = git_signature_default(&destination.signature, destination.repo);
 	if (error) {
 		const git_error *e = git_error_last();
-		fprintf(stderr, "git-import-squares: %s\n", e->message);
+		fprintf(stderr, "git-squares: %s\n", e->message);
 		git_repository_free(destination.repo);
 		return 1;
 	}
@@ -102,7 +102,7 @@ static int open_repository(const char *path) {
 		destination.repo, "HEAD");
 	if (error) {
 		const git_error *e = git_error_last();
-		fprintf(stderr, "git-import-squares: %s\n", e->message);
+		fprintf(stderr, "git-squares: %s\n", e->message);
 		git_signature_free(destination.signature);
 		git_repository_free(destination.repo);
 		return 1;
@@ -113,7 +113,7 @@ static int open_repository(const char *path) {
 		&destination.head.oid);
 	if (error) {
 		const git_error *e = git_error_last();
-		fprintf(stderr, "git-import-squares: %s\n", e->message);
+		fprintf(stderr, "git-squares: %s\n", e->message);
 		git_signature_free(destination.signature);
 		git_repository_free(destination.repo);
 		return 1;
@@ -122,7 +122,7 @@ static int open_repository(const char *path) {
 	error = git_commit_tree(&destination.head.tree, commit);
 	if (error) {
 		const git_error *e = git_error_last();
-		fprintf(stderr, "git-import-squares: %s\n", e->message);
+		fprintf(stderr, "git-squares: %s\n", e->message);
 		git_commit_free(commit);
 		git_signature_free(destination.signature);
 		git_repository_free(destination.repo);
@@ -134,7 +134,7 @@ static int open_repository(const char *path) {
 	error = walk_repository(destination.repo, load_commit);
 	if (error) {
 		const git_error *e = git_error_last();
-		fprintf(stderr, "git-import-squares: %s\n", e->message);
+		fprintf(stderr, "git-squares: %s\n", e->message);
 		git_signature_free(destination.signature);
 		git_repository_free(destination.repo);
 		return 1;
@@ -180,7 +180,7 @@ static int import_commit(git_repository *repo, git_oid *oid,
 		&destination.head.oid);
 	if (error) {
 		const git_error *e = git_error_last();
-		fprintf(stderr, "git-import-squares: %s\n", e->message);
+		fprintf(stderr, "git-squares: %s\n", e->message);
 		return 1;
 	}
 
@@ -205,7 +205,7 @@ static int import_commit(git_repository *repo, git_oid *oid,
 	);
 	if (error) {
 		const git_error *e = git_error_last();
-		fprintf(stderr, "git-import-squares: %s\n", e->message);
+		fprintf(stderr, "git-squares: %s\n", e->message);
 		return 1;
 	}
 
@@ -224,7 +224,7 @@ static int import_repository(const char *path) {
 	int error = git_repository_open(&repo, path);
 	if (error) {
 		const git_error *e = git_error_last();
-		fprintf(stderr, "git-import-squares: %s\n", e->message);
+		fprintf(stderr, "git-squares: %s\n", e->message);
 		return 1;
 	}
 

@@ -1,4 +1,4 @@
-AC_INIT(git-import-squares, 0.0.0)
+AC_INIT(git-squares, 0.0.0)
 AM_INIT_AUTOMAKE(foreign)
 
 AC_PROG_CC
