@@ -1,5 +1,5 @@
 bin_PROGRAMS = git-squares
-git_squares_SOURCES = destination.c main.c walker.c
+git_squares_SOURCES = destination.c import.c main.c walker.c
 git_squares_CFLAGS = $(LIBGIT2_CFLAGS)
 git_squares_LDFLAGS = $(LIBGIT2_LIBS)
 

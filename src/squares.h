@@ -25,6 +25,8 @@ int register_commit(git_oid *oid, git_time_t time);
 int open_repository(const char *path);
 void close_repository();
 
+int import_repository(const char *path);
+
 typedef int (*walk_func)(git_repository *repo, git_oid *oid, git_commit *commit);
 
 int walk_repository(git_repository *repo, walk_func f);
