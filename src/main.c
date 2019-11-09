@@ -240,7 +240,7 @@ int main(int argc, char **argv) {
 	}
 
 	for (int i = 1; ! error && i < argc; i++) {
-		error = import_repository(argv[1]);
+		error = import_repository(argv[i]);
 	}
 
 	close_repository();
