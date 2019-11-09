@@ -166,6 +166,12 @@ static int import_commit(git_repository *repo, git_oid *oid,
 		}
 	}
 
+	/* Skip if this commit isn't authored by us */
+	const git_signature *author = git_commit_author(commit);
+	if (strcmp(destination.signature->name, author->name)) {
+		return 0;
+	}
+
 	char hash[GIT_OID_HEXSZ + 1];
 	snprintf(hash, sizeof hash, "%s", git_oid_tostr_s(oid));
 
