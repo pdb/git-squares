@@ -19,8 +19,10 @@ int register_commit(squares_repo *r, git_oid *oid, git_time_t time) {
 	return 0;
 }
 
-static int load_commit(squares_repo *r, git_repository *repo, git_oid *oid,
-	git_commit *commit) {
+static int load_commit(git_repository *repo, git_oid *oid, git_commit *commit,
+	void *closure) {
+
+	squares_repo *r = closure;
 
 	const char *summary = git_commit_summary(commit);
 
@@ -91,7 +93,7 @@ int open_repository(squares_repo **_r, const char *path) {
 
 	git_commit_free(commit);
 
-	error = walk_repository(r, r->repo, load_commit);
+	error = walk_repository(r->repo, load_commit, r);
 	if (error) {
 		const git_error *e = git_error_last();
 		fprintf(stderr, "git-squares: %s\n", e->message);

@@ -27,9 +27,9 @@ void close_repository(squares_repo *r);
 
 int squares_import(int argc, char **argv);
 
-typedef int (*walk_func)(squares_repo *r, git_repository *repo, git_oid *oid,
-	git_commit *commit);
+typedef int (*walk_func)(git_repository *repo, git_oid *oid,
+	git_commit *commit, void *closure);
 
-int walk_repository(squares_repo *r, git_repository *repo, walk_func f);
+int walk_repository(git_repository *repo, walk_func f, void *closure);
 
 #endif

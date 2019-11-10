@@ -8,11 +8,13 @@ typedef struct {
 	const char *path;
 } import_job;
 
-static int import_commit(squares_repo *r, git_repository *repo, git_oid *oid,
-	git_commit *commit) {
+static int import_commit(git_repository *repo, git_oid *oid,
+	git_commit *commit, void *closure) {
+
+	import_job *job = closure;
 
 	/* Skip if this commit is already known to us */
-	for (squares_commit *c = r->commits; c; c = c->next) {
+	for (squares_commit *c = job->r->commits; c; c = c->next) {
 		if (git_oid_equal(oid, &c->oid)) {
 			return 0;
 		}
@@ -20,7 +22,7 @@ static int import_commit(squares_repo *r, git_repository *repo, git_oid *oid,
 
 	/* Skip if this commit isn't authored by us */
 	const git_signature *author = git_commit_author(commit);
-	if (strcmp(r->signature->name, author->name)) {
+	if (strcmp(job->r->signature->name, author->name)) {
 		return 0;
 	}
 
@@ -28,14 +30,14 @@ static int import_commit(squares_repo *r, git_repository *repo, git_oid *oid,
 	snprintf(hash, sizeof hash, "%s", git_oid_tostr_s(oid));
 
 	git_commit *parent;
-	int error = git_commit_lookup(&parent, r->repo, &r->head.oid);
+	int error = git_commit_lookup(&parent, job->r->repo, &job->r->head.oid);
 	if (error) {
 		const git_error *e = git_error_last();
 		fprintf(stderr, "git-squares: %s\n", e->message);
 		return 1;
 	}
 
-	r->signature->when = (git_time) {
+	job->r->signature->when = (git_time) {
 		git_commit_time(commit),
 		git_commit_time_offset(commit),
 		git_commit_time_offset(commit) < 0 ? '-' : '+'
@@ -44,13 +46,13 @@ static int import_commit(squares_repo *r, git_repository *repo, git_oid *oid,
 	git_oid new_commit_oid;
 	error = git_commit_create_v(
 		&new_commit_oid,
-		r->repo,
+		job->r->repo,
 		"HEAD",
-		r->signature,
-		r->signature,
+		job->r->signature,
+		job->r->signature,
 		"UTF-8",
 		hash,
-		r->head.tree,
+		job->r->head.tree,
 		1,
 		parent
 	);
@@ -62,9 +64,9 @@ static int import_commit(squares_repo *r, git_repository *repo, git_oid *oid,
 
 	git_commit_free(parent);
 
-	git_oid_cpy(&r->head.oid, &new_commit_oid);
+	git_oid_cpy(&job->r->head.oid, &new_commit_oid);
 
-	register_commit(r, &new_commit_oid, git_commit_time(commit));
+	register_commit(job->r, &new_commit_oid, git_commit_time(commit));
 
 	return 0;
 }
@@ -79,7 +81,7 @@ static int import_repository(import_job *job) {
 		return 1;
 	}
 
-	error = walk_repository(job->r, repo, import_commit);
+	error = walk_repository(repo, import_commit, job);
 
 	git_repository_free(repo);
 
