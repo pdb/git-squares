@@ -3,6 +3,11 @@
 #include <stdio.h>
 #include <string.h>
 
+typedef struct {
+	squares_repo *r;
+	const char *path;
+} import_job;
+
 static int import_commit(squares_repo *r, git_repository *repo, git_oid *oid,
 	git_commit *commit) {
 
@@ -64,17 +69,17 @@ static int import_commit(squares_repo *r, git_repository *repo, git_oid *oid,
 	return 0;
 }
 
-static int import_repository(squares_repo *r, const char *path) {
+static int import_repository(import_job *job) {
 
 	git_repository *repo = NULL;
-	int error = git_repository_open(&repo, path);
+	int error = git_repository_open(&repo, job->path);
 	if (error) {
 		const git_error *e = git_error_last();
 		fprintf(stderr, "git-squares: %s\n", e->message);
 		return 1;
 	}
 
-	error = walk_repository(r, repo, import_commit);
+	error = walk_repository(job->r, repo, import_commit);
 
 	git_repository_free(repo);
 
@@ -83,17 +88,19 @@ static int import_repository(squares_repo *r, const char *path) {
 
 int squares_import(int argc, char **argv) {
 
-	squares_repo *r;
-	int error = open_repository(&r, ".");
+	import_job job;
+
+	int error = open_repository(&job.r, ".");
 	if (error) {
 		return 1;
 	}
 
 	for (int i = 1; ! error && i < argc; i++) {
-		error = import_repository(r, argv[i]);
+		job.path = argv[i];
+		error = import_repository(&job);
 	}
 
-	close_repository(r);
+	close_repository(job.r);
 
 	return error;
 }
