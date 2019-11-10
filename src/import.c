@@ -7,7 +7,7 @@ static int import_commit(squares_repo *destination, git_repository *repo,
 	git_oid *oid, git_commit *commit) {
 
 	/* Skip if this commit is already known to us */
-	for (struct commit *c = destination->commits; c; c = c->next) {
+	for (squares_commit *c = destination->commits; c; c = c->next) {
 		if (git_oid_equal(oid, &c->oid)) {
 			return 0;
 		}

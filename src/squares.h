@@ -3,11 +3,13 @@
 
 #include <git2.h>
 
-struct commit {
+typedef struct commit squares_commit;
+
+typedef struct commit {
 	git_oid oid;
 	git_time_t time;
-	struct commit *next;
-};
+	squares_commit *next;
+} squares_commit;
 
 typedef struct {
 	git_repository *repo;
@@ -16,7 +18,7 @@ typedef struct {
 		git_oid oid;
 		git_tree *tree;
 	} head;
-	struct commit *commits;
+	squares_commit *commits;
 } squares_repo;
 
 int register_commit(squares_repo *destination, git_oid *oid,

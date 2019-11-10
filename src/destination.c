@@ -5,7 +5,7 @@
 
 int register_commit(squares_repo *destination, git_oid *oid, git_time_t time) {
 
-	struct commit *c = malloc(sizeof(struct commit));
+	squares_commit *c = malloc(sizeof(squares_commit));
 	if (! c) {
 		return 1;
 	}
@@ -111,7 +111,7 @@ int open_repository(squares_repo **_destination, const char *path) {
 void close_repository(squares_repo *destination) {
 
 	while (destination->commits) {
-		struct commit *c = destination->commits->next;
+		squares_commit *c = destination->commits->next;
 		free(destination->commits);
 		destination->commits = c;
 	}
