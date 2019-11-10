@@ -15,6 +15,14 @@ static int import_commit(git_repository *repo, git_oid *oid,
 
 	import_job *job = closure;
 
+	/* Skip if this commit looks like a squares commit */
+	const char *message = git_commit_message(commit);
+	git_oid tmp;
+	if (strlen(message) == GIT_OID_HEXSZ &&
+		git_oid_fromstr(&tmp, message) == 0) {
+		return 0;
+	}
+
 	/* Skip if this commit is already known to us */
 	for (squares_commit *c = job->r->commits; c; c = c->next) {
 		if (git_oid_equal(oid, &c->oid)) {
