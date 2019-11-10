@@ -93,16 +93,24 @@ static int import_repository(import_job *job) {
 
 static struct option long_options[] = {
 	{ "author",		required_argument,	NULL, 'a' },
+	{ "squares-repository",	required_argument,	NULL, 'r' },
 	{ NULL, 0, NULL, 0 }
 };
+
+static void usage() {
+
+	fprintf(stderr, "usage: git squares import "
+		"[--squares-repo REPO] [--author AUTHOR] REPO ...\n");
+}
 
 int squares_import(int argc, char **argv) {
 
 	import_job job = { NULL };
+	char *path = NULL;
 
 	while (1) {
 		int option_index = 0;
-		int c = getopt_long(argc, argv, "a:", long_options,
+		int c = getopt_long(argc, argv, "a:r:", long_options,
 			&option_index);
 		if (c == -1) {
 			break;
@@ -112,20 +120,26 @@ int squares_import(int argc, char **argv) {
 				free(job.author);
 				job.author = strdup(optarg);
 				break;
+			case 'r':
+				free(path);
+				path = strdup(optarg);
+				break;
 			default:
+				free(path);
 				free(job.author);
 				return 1;
 		}
 	}
 
 	if (argc == optind) {
-		fprintf(stderr, "usage: "
-			"git squares import [--author AUTHOR] REPO ...\n");
+		usage();
+		free(path);
 		free(job.author);
 		return 1;
 	}
 
-	int error = open_repository(&job.r, ".");
+	int error = open_repository(&job.r, path ? path : ".");
+	free(path);
 	if (error) {
 		return 1;
 	}
