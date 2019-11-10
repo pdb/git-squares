@@ -4,7 +4,7 @@ int main(int argc, char **argv) {
 
 	git_libgit2_init();
 
-	struct destination *destination;
+	squares_repo *destination;
 	int error = open_repository(&destination, ".");
 	if (error) {
 		git_libgit2_shutdown();

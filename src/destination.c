@@ -3,8 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 
-int register_commit(struct destination *destination, git_oid *oid,
-	git_time_t time) {
+int register_commit(squares_repo *destination, git_oid *oid, git_time_t time) {
 
 	struct commit *c = malloc(sizeof(struct commit));
 	if (! c) {
@@ -20,7 +19,7 @@ int register_commit(struct destination *destination, git_oid *oid,
 	return 0;
 }
 
-static int load_commit(struct destination *destination, git_repository *repo,
+static int load_commit(squares_repo *destination, git_repository *repo,
 	git_oid *oid, git_commit *commit) {
 
 	const char *summary = git_commit_summary(commit);
@@ -37,16 +36,16 @@ static int load_commit(struct destination *destination, git_repository *repo,
 		git_commit_time(commit));
 }
 
-int open_repository(struct destination **_destination, const char *path) {
+int open_repository(squares_repo **_destination, const char *path) {
 
-	struct destination *destination =
-		*_destination = malloc(sizeof(struct destination));
+	squares_repo *destination =
+		*_destination = malloc(sizeof(squares_repo));
 	if (! destination) {
 		fprintf(stderr, "git-squares: malloc failed\n");
 		return 1;
 	}
 
-	memset(destination, 0, sizeof(struct destination));
+	memset(destination, 0, sizeof(squares_repo));
 
 	int error = git_repository_open(&destination->repo, path);
 	if (error) {
@@ -109,7 +108,7 @@ int open_repository(struct destination **_destination, const char *path) {
 	return error;
 }
 
-void close_repository(struct destination *destination) {
+void close_repository(squares_repo *destination) {
 
 	while (destination->commits) {
 		struct commit *c = destination->commits->next;

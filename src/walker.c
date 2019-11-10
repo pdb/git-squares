@@ -2,7 +2,7 @@
 
 #include <stdio.h>
 
-int walk_repository(struct destination *destination, git_repository *repo,
+int walk_repository(squares_repo *destination, git_repository *repo,
 	walk_func f) {
 
 	git_revwalk *walk = NULL;

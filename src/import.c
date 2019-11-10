@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 
-static int import_commit(struct destination *destination, git_repository *repo,
+static int import_commit(squares_repo *destination, git_repository *repo,
 	git_oid *oid, git_commit *commit) {
 
 	/* Skip if this commit is already known to us */
@@ -65,7 +65,7 @@ static int import_commit(struct destination *destination, git_repository *repo,
 	return 0;
 }
 
-int import_repository(struct destination *destination, const char *path) {
+int import_repository(squares_repo *destination, const char *path) {
 
 	git_repository *repo = NULL;
 	int error = git_repository_open(&repo, path);
