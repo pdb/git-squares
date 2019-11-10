@@ -4,18 +4,18 @@ int main(int argc, char **argv) {
 
 	git_libgit2_init();
 
-	squares_repo *destination;
-	int error = open_repository(&destination, ".");
+	squares_repo *r;
+	int error = open_repository(&r, ".");
 	if (error) {
 		git_libgit2_shutdown();
 		return 1;
 	}
 
 	for (int i = 1; ! error && i < argc; i++) {
-		error = import_repository(destination, argv[i]);
+		error = import_repository(r, argv[i]);
 	}
 
-	close_repository(destination);
+	close_repository(r);
 
 	git_libgit2_shutdown();
 

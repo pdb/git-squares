@@ -2,8 +2,7 @@
 
 #include <stdio.h>
 
-int walk_repository(squares_repo *destination, git_repository *repo,
-	walk_func f) {
+int walk_repository(squares_repo *r, git_repository *repo, walk_func f) {
 
 	git_revwalk *walk = NULL;
 	git_revwalk_new(&walk, repo);
@@ -23,7 +22,7 @@ int walk_repository(squares_repo *destination, git_repository *repo,
 			const git_error *e = git_error_last();
 			fprintf(stderr, "git-squares: %s\n", e->message);
 		} else {
-			error = f(destination, repo, &oid, commit);
+			error = f(r, repo, &oid, commit);
 			git_commit_free(commit);
 		}
 	}

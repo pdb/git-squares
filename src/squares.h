@@ -21,17 +21,15 @@ typedef struct {
 	squares_commit *commits;
 } squares_repo;
 
-int register_commit(squares_repo *destination, git_oid *oid,
-	git_time_t time);
-int open_repository(squares_repo **destination, const char *path);
-void close_repository(squares_repo *destination);
+int register_commit(squares_repo *r, git_oid *oid, git_time_t time);
+int open_repository(squares_repo **r, const char *path);
+void close_repository(squares_repo *r);
 
-int import_repository(squares_repo *destination, const char *path);
+int import_repository(squares_repo *r, const char *path);
 
-typedef int (*walk_func)(squares_repo *destination, git_repository *repo,
-	git_oid *oid, git_commit *commit);
+typedef int (*walk_func)(squares_repo *r, git_repository *repo, git_oid *oid,
+	git_commit *commit);
 
-int walk_repository(squares_repo *destination, git_repository *repo,
-	walk_func f);
+int walk_repository(squares_repo *r, git_repository *repo, walk_func f);
 
 #endif
