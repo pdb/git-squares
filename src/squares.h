@@ -15,14 +15,15 @@ typedef struct {
 	git_repository *repo;
 	git_signature *signature;
 	struct {
+		char *name;
 		git_oid oid;
 		git_tree *tree;
-	} head;
+	} ref;
 	squares_commit *commits;
 } squares_repo;
 
 int register_commit(squares_repo *r, git_oid *oid, git_time_t time);
-int open_repository(squares_repo **r, const char *path);
+int open_repository(squares_repo **r, const char *path, const char *ref);
 void close_repository(squares_repo *r);
 
 int squares_import(int argc, char **argv);

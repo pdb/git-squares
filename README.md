@@ -54,13 +54,14 @@ commits and so this repository can simply start with an empty initial commit.
 
 Commits from any number of local repositories may be imported by running:
 
-<pre><code>$ git squares <b>import</b> [--squares-repo <i>REPO</i>] [--author <i>AUTHOR</i>] <i>REPO</i> ...
+<pre><code>$ git squares <b>import</b> [--squares-repo <i>REPO</i>] [--squares-branch <i>BRANCH</i>] \
+>   [--author <i>AUTHOR</i>] <i>REPO</i> ...
 </code></pre>
 
 This will scan all branches in all specified repositories for commits by the
 given <code><i>AUTHOR</i></code> that aren't present in the squares repository
-and create a new commit, on the HEAD of the squares repository, for each one
-found.
+and create a new commit in the squares repository for each one found (on
+<code><i>BRANCH</i></code> if specified, otherwise the current HEAD).
 
 If `--squares-repo` is not specified then a default value of `.` is used.
 

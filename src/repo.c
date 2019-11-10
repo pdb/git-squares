@@ -37,7 +37,7 @@ static int load_commit(git_repository *repo, git_oid *oid, git_commit *commit,
 	return register_commit(r, &commit_oid, git_commit_time(commit));
 }
 
-int open_repository(squares_repo **_r, const char *path) {
+int open_repository(squares_repo **_r, const char *path, const char *ref) {
 
 	squares_repo *r = *_r = malloc(sizeof(squares_repo));
 	if (! r) {
@@ -62,32 +62,43 @@ int open_repository(squares_repo **_r, const char *path) {
 		return 1;
 	}
 
-	error = git_reference_name_to_id(&r->head.oid, r->repo, "HEAD");
+	if (ref) {
+		char buffer[1024];
+		snprintf(buffer, sizeof buffer, "refs/heads/%s", ref);
+		r->ref.name = strdup(buffer);
+	} else {
+		r->ref.name = strdup("HEAD");
+	}
+
+	error = git_reference_name_to_id(&r->ref.oid, r->repo, r->ref.name);
 	if (error) {
 		const git_error *e = git_error_last();
 		fprintf(stderr, "git-squares: %s\n", e->message);
 		git_signature_free(r->signature);
 		git_repository_free(r->repo);
+		free(r->ref.name);
 		return 1;
 	}
 
 	git_commit *commit;
-	error = git_commit_lookup(&commit, r->repo, &r->head.oid);
+	error = git_commit_lookup(&commit, r->repo, &r->ref.oid);
 	if (error) {
 		const git_error *e = git_error_last();
 		fprintf(stderr, "git-squares: %s\n", e->message);
 		git_signature_free(r->signature);
 		git_repository_free(r->repo);
+		free(r->ref.name);
 		return 1;
 	}
 
-	error = git_commit_tree(&r->head.tree, commit);
+	error = git_commit_tree(&r->ref.tree, commit);
 	if (error) {
 		const git_error *e = git_error_last();
 		fprintf(stderr, "git-squares: %s\n", e->message);
 		git_commit_free(commit);
 		git_signature_free(r->signature);
 		git_repository_free(r->repo);
+		free(r->ref.name);
 		return 1;
 	}
 
@@ -99,6 +110,7 @@ int open_repository(squares_repo **_r, const char *path) {
 		fprintf(stderr, "git-squares: %s\n", e->message);
 		git_signature_free(r->signature);
 		git_repository_free(r->repo);
+		free(r->ref.name);
 		return 1;
 	}
 
@@ -113,9 +125,9 @@ void close_repository(squares_repo *r) {
 		r->commits = c;
 	}
 
-	git_tree_free(r->head.tree);
+	git_tree_free(r->ref.tree);
 	git_signature_free(r->signature);
 	git_repository_free(r->repo);
-
+	free(r->ref.name);
 	free(r);
 }

@@ -33,7 +33,7 @@ static int import_commit(git_repository *repo, git_oid *oid,
 	snprintf(hash, sizeof hash, "%s", git_oid_tostr_s(oid));
 
 	git_commit *parent;
-	int error = git_commit_lookup(&parent, job->r->repo, &job->r->head.oid);
+	int error = git_commit_lookup(&parent, job->r->repo, &job->r->ref.oid);
 	if (error) {
 		const git_error *e = git_error_last();
 		fprintf(stderr, "git-squares: %s\n", e->message);
@@ -50,12 +50,12 @@ static int import_commit(git_repository *repo, git_oid *oid,
 	error = git_commit_create_v(
 		&new_commit_oid,
 		job->r->repo,
-		"HEAD",
+		job->r->ref.name,
 		job->r->signature,
 		job->r->signature,
 		"UTF-8",
 		hash,
-		job->r->head.tree,
+		job->r->ref.tree,
 		1,
 		parent
 	);
@@ -67,7 +67,7 @@ static int import_commit(git_repository *repo, git_oid *oid,
 
 	git_commit_free(parent);
 
-	git_oid_cpy(&job->r->head.oid, &new_commit_oid);
+	git_oid_cpy(&job->r->ref.oid, &new_commit_oid);
 
 	register_commit(job->r, &new_commit_oid, git_commit_time(commit));
 
@@ -93,19 +93,22 @@ static int import_repository(import_job *job) {
 
 static struct option long_options[] = {
 	{ "author",		required_argument,	NULL, 'a' },
+	{ "squares-branch",	required_argument,	NULL, 'b' },
 	{ "squares-repository",	required_argument,	NULL, 'r' },
 	{ NULL, 0, NULL, 0 }
 };
 
 static void usage() {
 
-	fprintf(stderr, "usage: git squares import "
-		"[--squares-repo REPO] [--author AUTHOR] REPO ...\n");
+	fprintf(stderr, "\
+usage: git squares import [--squares-repo REPO] [--squares-branch=BRANCH] \n\
+	[--author AUTHOR] REPO ...\n");
 }
 
 int squares_import(int argc, char **argv) {
 
 	import_job job = { NULL };
+	char *branch = NULL;
 	char *path = NULL;
 
 	while (1) {
@@ -120,11 +123,16 @@ int squares_import(int argc, char **argv) {
 				free(job.author);
 				job.author = strdup(optarg);
 				break;
+			case 'b':
+				free(branch);
+				branch = strdup(optarg);
+				break;
 			case 'r':
 				free(path);
 				path = strdup(optarg);
 				break;
 			default:
+				free(branch);
 				free(path);
 				free(job.author);
 				return 1;
@@ -133,12 +141,14 @@ int squares_import(int argc, char **argv) {
 
 	if (argc == optind) {
 		usage();
+		free(branch);
 		free(path);
 		free(job.author);
 		return 1;
 	}
 
-	int error = open_repository(&job.r, path ? path : ".");
+	int error = open_repository(&job.r, path ? path : ".", branch);
+	free(branch);
 	free(path);
 	if (error) {
 		return 1;
