@@ -25,7 +25,7 @@ int register_commit(squares_repo *r, git_oid *oid, git_time_t time);
 int open_repository(squares_repo **r, const char *path);
 void close_repository(squares_repo *r);
 
-int import_repository(squares_repo *r, const char *path);
+int squares_import(int argc, char **argv);
 
 typedef int (*walk_func)(squares_repo *r, git_repository *repo, git_oid *oid,
 	git_commit *commit);

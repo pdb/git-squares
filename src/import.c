@@ -64,7 +64,7 @@ static int import_commit(squares_repo *r, git_repository *repo, git_oid *oid,
 	return 0;
 }
 
-int import_repository(squares_repo *r, const char *path) {
+static int import_repository(squares_repo *r, const char *path) {
 
 	git_repository *repo = NULL;
 	int error = git_repository_open(&repo, path);
@@ -77,6 +77,23 @@ int import_repository(squares_repo *r, const char *path) {
 	error = walk_repository(r, repo, import_commit);
 
 	git_repository_free(repo);
+
+	return error;
+}
+
+int squares_import(int argc, char **argv) {
+
+	squares_repo *r;
+	int error = open_repository(&r, ".");
+	if (error) {
+		return 1;
+	}
+
+	for (int i = 1; ! error && i < argc; i++) {
+		error = import_repository(r, argv[i]);
+	}
+
+	close_repository(r);
 
 	return error;
 }

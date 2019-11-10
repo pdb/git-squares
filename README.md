@@ -34,6 +34,5 @@ $ make install
 This will install the `git-squares` binary which can be invoked directly, or -
 if installed to a location specified in `$PATH` - indirectly via `git` itself:
 
-```
-$ git squares ...
-```
+<pre><code>$ git squares <i>command</i> [<i>args</i>]
+</code></pre>

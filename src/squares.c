@@ -1,23 +1,31 @@
 #include "squares.h"
 
+#include <stdio.h>
+#include <string.h>
+
+static void usage(const char *app) {
+
+	fprintf(stderr, "usage: %s <command> [<args>]\n", app);
+}
+
 int main(int argc, char **argv) {
 
-	git_libgit2_init();
-
-	squares_repo *r;
-	int error = open_repository(&r, ".");
-	if (error) {
-		git_libgit2_shutdown();
+	if (argc == 1) {
+		usage(argv[0]);
 		return 1;
 	}
 
-	for (int i = 1; ! error && i < argc; i++) {
-		error = import_repository(r, argv[i]);
-	}
+	git_libgit2_init();
 
-	close_repository(r);
+	int result;
+	if (strcmp(argv[1], "import") == 0) {
+		result = squares_import(argc - 1, argv + 1);
+	} else {
+		usage(argv[0]);
+		result = 1;
+	}
 
 	git_libgit2_shutdown();
 
-	return error;
+	return result;
 }
