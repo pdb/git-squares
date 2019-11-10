@@ -54,14 +54,20 @@ commits and so this repository can simply start with an empty initial commit.
 
 Commits from any number of local repositories may be imported by running:
 
-<pre><code>$ git squares <b>import</b> <i>REPO</i> ...
+<pre><code>$ git squares <b>import</b> [--author <i>AUTHOR</i>] <i>REPO</i> ...
 </code></pre>
 
 from _within_ a squares repository.
 
-This will scan all branches in all specified repositories for unknown commits
+This will scan all branches in all specified repositories for commits by the
+given <code><i>AUTHOR</i></code> that aren't present in the squares repository
 and create a new commit, on the HEAD of the squares repository, for each one
 found.
+
+<code><i>AUTHOR</i></code> may be specified as a name _or_ email address; if
+<code><i>AUTHOR</i></code> is not specified, the value of
+`git config --get user.name` (as configured for the squares repository) is used
+as a default.
 
 As commit hashes are recorded in the squares repository this command can be run
 against the same local repositories multiple times without creating duplicate

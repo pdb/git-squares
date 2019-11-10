@@ -1,11 +1,13 @@
 #include "squares.h"
 
+#include <getopt.h>
 #include <stdio.h>
 #include <string.h>
 
 typedef struct {
 	squares_repo *r;
 	const char *path;
+	char *author;
 } import_job;
 
 static int import_commit(git_repository *repo, git_oid *oid,
@@ -22,7 +24,8 @@ static int import_commit(git_repository *repo, git_oid *oid,
 
 	/* Skip if this commit isn't authored by us */
 	const git_signature *author = git_commit_author(commit);
-	if (strcmp(job->r->signature->name, author->name)) {
+	if (strcmp(job->author, author->name) &&
+		strcmp(job->author, author->email)) {
 		return 0;
 	}
 
@@ -88,21 +91,56 @@ static int import_repository(import_job *job) {
 	return error;
 }
 
+static struct option long_options[] = {
+	{ "author",		required_argument,	NULL, 'a' },
+	{ NULL, 0, NULL, 0 }
+};
+
 int squares_import(int argc, char **argv) {
 
-	import_job job;
+	import_job job = { NULL };
+
+	while (1) {
+		int option_index = 0;
+		int c = getopt_long(argc, argv, "a:", long_options,
+			&option_index);
+		if (c == -1) {
+			break;
+		}
+		switch (c) {
+			case 'a':
+				free(job.author);
+				job.author = strdup(optarg);
+				break;
+			default:
+				free(job.author);
+				return 1;
+		}
+	}
+
+	if (argc == optind) {
+		fprintf(stderr, "usage: "
+			"git squares import [--author AUTHOR] REPO ...\n");
+		free(job.author);
+		return 1;
+	}
 
 	int error = open_repository(&job.r, ".");
 	if (error) {
 		return 1;
 	}
 
-	for (int i = 1; ! error && i < argc; i++) {
+	if (! job.author) {
+		job.author = strdup(job.r->signature->name);
+	}
+
+	for (int i = optind; ! error && i < argc; i++) {
 		job.path = argv[i];
 		error = import_repository(&job);
 	}
 
 	close_repository(job.r);
+	free(job.author);
 
 	return error;
 }
