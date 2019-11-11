@@ -77,7 +77,7 @@ static int import_commit(git_repository *repo, git_oid *oid,
 
 	git_oid_cpy(&job->r->ref.oid, &new_commit_oid);
 
-	register_commit(job->r, &new_commit_oid, git_commit_time(commit));
+	register_commit(job->r, oid, git_commit_time(commit));
 
 	return 0;
 }
